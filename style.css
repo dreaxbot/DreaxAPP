@@ -1,0 +1,181 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: #e0e0e0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#login-screen {
+    background: #1e1e1e;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    width: 320px;
+    text-align: center;
+}
+
+#login-screen h2 { margin-top: 0; color: #0084ff; }
+
+#login-screen input {
+    margin-bottom: 15px;
+    padding: 12px;
+    border: 1px solid #333;
+    background: #2a2a2a;
+    color: #fff;
+    border-radius: 5px;
+}
+
+#login-screen button {
+    padding: 12px;
+    background: #0084ff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#login-screen button:hover { background: #006bb3; }
+
+#error-msg {
+    color: #ff4a4a;
+    display: none;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+#main-screen {
+    display: flex;
+    width: 90vw;
+    height: 90vh;
+    background: #1e1e1e;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+}
+
+#sidebar {
+    width: 300px;
+    background: #181818;
+    border-right: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+}
+
+.user-profile {
+    padding: 20px;
+    background: #232323;
+    font-weight: bold;
+    border-bottom: 1px solid #333;
+    color: #0084ff;
+}
+
+.top-buttons {
+    display: flex;
+    gap: 10px;
+    padding: 15px;
+}
+
+.top-buttons button {
+    flex: 1;
+    padding: 10px;
+    background: #333;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.top-buttons button:hover { background: #444; }
+
+#requests-area, #contacts-area {
+    padding: 15px;
+}
+
+#requests-area h3, #contacts-area h3 {
+    font-size: 14px;
+    color: #888;
+    border-bottom: 1px solid #333;
+    padding-bottom: 5px;
+}
+
+ul { list-style-type: none; padding: 0; margin: 0; }
+li { padding: 10px; background: #2a2a2a; margin-bottom: 5px; border-radius: 5px; cursor: pointer; }
+li:hover { background: #333; }
+
+#chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#chat-title {
+    padding: 20px;
+    margin: 0;
+    background: #232323;
+    border-bottom: 1px solid #333;
+}
+
+#messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+#message-inputs {
+    display: flex;
+    padding: 20px;
+    background: #181818;
+    border-top: 1px solid #333;
+    gap: 10px;
+}
+
+#message-inputs input {
+    flex: 1;
+    padding: 15px;
+    border: none;
+    background: #2a2a2a;
+    color: white;
+    border-radius: 5px;
+}
+
+#message-inputs button {
+    padding: 15px 25px;
+    background: #0084ff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* Modal (Pencere) Tasarımı */
+.modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: #1e1e1e;
+    padding: 30px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 250px;
+}
+
+.modal-content input { padding: 10px; border-radius: 5px; border: none; background: #2a2a2a; color: #fff;}
+.modal-content button { padding: 10px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold;}
+#send-request-btn { background: #0084ff; color: white; }
+#close-modal-btn { background: #ff4a4a; color: white; }

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DreaxAPP - Özel Sohbet</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- GİRİŞ EKRANI -->
+    <div id="login-screen">
+        <h2>DreaxAPP'e Giriş</h2>
+        <input type="text" id="username" placeholder="Kullanıcı Adı">
+        <input type="password" id="password" placeholder="Şifre">
+        <button id="login-btn">Giriş Yap</button>
+        <p id="error-msg">Hatalı bilgi veya kayıtlı değilsiniz!</p>
+    </div>
+
+    <!-- ANA SOHBET EKRANI -->
+    <div id="main-screen" style="display: none;">
+        
+        <!-- Sol Menü -->
+        <div id="sidebar">
+            <div class="user-profile">
+                Hoş geldin, <span id="current-user-display"></span>
+            </div>
+            <div class="top-buttons">
+                <button id="add-chat-btn">Sohbet Ekle</button>
+                <button id="create-group-btn">Grup Oluştur</button>
+            </div>
+            
+            <div id="requests-area">
+                <h3>Gelen İstekler</h3>
+                <ul id="requests-list">
+                    <!-- İstekler buraya düşecek -->
+                </ul>
+            </div>
+
+            <div id="contacts-area">
+                <h3>Sohbetlerim</h3>
+                <ul id="contacts-list">
+                    <!-- Kabul edilen kişiler buraya düşecek -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Sağ Taraf (Mesajlaşma) -->
+        <div id="chat-area">
+            <h2 id="chat-title">Mesajlaşmak için bir sohbet seçin</h2>
+            <div id="messages"></div>
+            
+            <div id="message-inputs" style="display: none;">
+                <input type="text" id="msg-text" placeholder="Mesajınızı yazın...">
+                <button id="send-btn">Gönder</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SOHBET EKLE PENCERESİ (Gizli) -->
+    <div id="add-chat-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Kullanıcıya İstek At</h3>
+            <input type="text" id="target-username" placeholder="Arkadaşının Kullanıcı Adı">
+            <button id="send-request-btn">İstek Gönder</button>
+            <button id="close-modal-btn">İptal</button>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
