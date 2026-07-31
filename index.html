@@ -14,7 +14,7 @@
         <input type="text" id="username" placeholder="Kullanıcı Adı">
         <input type="password" id="password" placeholder="Şifre">
         <button id="login-btn">Giriş Yap</button>
-        <p id="error-msg">Hatalı bilgi veya kayıtlı değilsiniz!</p>
+        <p id="error-msg" style="display: none; color: #ff4a4a; font-size: 14px; margin-top: 10px;">Hatalı bilgi veya kayıtlı değilsiniz!</p>
     </div>
 
     <!-- ANA SOHBET EKRANI -->
@@ -45,15 +45,30 @@
             </div>
         </div>
 
-        <!-- Sağ Taraf (Mesajlaşma) -->
+        <!-- Sağ Taraf (Mesajlaşma Paneli) -->
         <div id="chat-area">
-            <h2 id="chat-title">Mesajlaşmak için bir sohbet seçin</h2>
+            
+            <!-- Üst Başlık ve Sesli Arama Butonu -->
+            <div id="chat-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: #232323; border-bottom: 1px solid #333;">
+                <h2 id="chat-title" style="margin: 0;">Mesajlaşmak için bir sohbet seçin</h2>
+                
+                <!-- Sesli Ara Butonu (Başlangıçta gizli, sohbet seçilince açılacak) -->
+                <button id="voice-call-btn" style="display: none; background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">📞 Sesli Ara</button>
+            </div>
+            
+            <!-- Mesajların Görüneceği Yer -->
             <div id="messages"></div>
             
+            <!-- Mesaj Yazma Alanı -->
             <div id="message-inputs" style="display: none;">
-                <input type="text" id="msg-text" placeholder="Mesajınızı yazın...">
+                <input type="text" id="message-input" placeholder="Mesajınızı yazın...">
                 <button id="send-btn">Gönder</button>
             </div>
+
+            <!-- Sesli Konuşma İçin Görünmez Hoparlörler (Sistemin Arka Planında Çalışır) -->
+            <audio id="local-audio" autoplay muted></audio>
+            <audio id="remote-audio" autoplay></audio>
+            
         </div>
     </div>
 
@@ -67,6 +82,7 @@
         </div>
     </div>
 
+    <!-- Sistem Beyni -->
     <script type="module" src="app.js"></script>
 </body>
 </html>
