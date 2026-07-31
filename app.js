@@ -1,7 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, collection, addDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// Yeni eklenenler: deleteDoc (silmek için)
+import { getFirestore, doc, getDoc, collection, addDoc, query, where, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// KENDİ FİREBASE BİLGİLERİNİ BURAYA GİR
+// KENDİ FIREBASE BİLGİLERİNİ BURAYA YAPIŞTIRMAYI UNUTMA!
 const firebaseConfig = {
   apiKey: "AIzaSyCIa-z4ix0DFudPRtXoXkpaeiye57KzrFw",
   authDomain: "dreaxapp.firebaseapp.com",
@@ -14,7 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let currentUser = ""; // Giriş yapan kişiyi hafızada tutacağız
+let currentUser = ""; 
 
 // ARAYÜZ ELEMENTLERİ
 const loginBtn = document.getElementById("login-btn");
@@ -32,28 +33,25 @@ const closeModalBtn = document.getElementById("close-modal-btn");
 const sendRequestBtn = document.getElementById("send-request-btn");
 const targetUsernameInput = document.getElementById("target-username");
 
-// 1. GİRİŞ YAPMA İŞLEMİ (Veritabanındaki "users" koleksiyonundan kontrol eder)
+// 1. GİRİŞ YAPMA İŞLEMİ
 loginBtn.addEventListener("click", async () => {
     const user = usernameInput.value.trim();
     const pass = passwordInput.value.trim();
 
     if(user === "" || pass === "") return;
 
-    // Firebase'de "users" koleksiyonunda bu kullanıcı adında bir belge var mı bakıyoruz
     const userRef = doc(db, "users", user);
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists() && userSnap.data().password === pass) {
-        // Giriş Başarılı
         currentUser = user;
         currentUserDisplay.textContent = currentUser;
         loginScreen.style.display = "none";
         mainScreen.style.display = "flex";
         
-        // Giriş yapınca istekleri dinlemeye başla
         listenForRequests();
+        listenForContacts(); // Giriş yapınca sohbetlerimizi de çekmeye başla
     } else {
-        // Hata
         errorMsg.style.display = "block";
     }
 });
@@ -72,16 +70,14 @@ sendRequestBtn.addEventListener("click", async () => {
     const target = targetUsernameInput.value.trim();
     if(target === "" || target === currentUser) return;
 
-    // Hedef kullanıcı veritabanında kayıtlı mı diye kontrol et
     const targetRef = doc(db, "users", target);
     const targetSnap = await getDoc(targetRef);
 
     if(targetSnap.exists()) {
-        // Kayıtlıysa "requests" (İstekler) koleksiyonuna yeni istek ekle
         await addDoc(collection(db, "requests"), {
             from: currentUser,
             to: target,
-            status: "pending" // Bekliyor
+            status: "pending" 
         });
         alert("İstek başarıyla gönderildi!");
         addChatModal.style.display = "none";
@@ -90,29 +86,73 @@ sendRequestBtn.addEventListener("click", async () => {
     }
 });
 
-// 4. GELEN İSTEKLERİ DİNLEME (Canlı olarak)
+// 4. GELEN İSTEKLERİ DİNLEME
 function listenForRequests() {
     const q = query(collection(db, "requests"), where("to", "==", currentUser), where("status", "==", "pending"));
     
-    // onSnapshot, veritabanına yeni bir istek eklendiği anda sayfayı yenilemeden bunu çeker
     onSnapshot(q, (snapshot) => {
         const requestsList = document.getElementById("requests-list");
-        requestsList.innerHTML = ""; // Listeyi temizle
+        requestsList.innerHTML = ""; 
         
-        snapshot.forEach((doc) => {
-            const data = doc.data();
+        snapshot.forEach((requestDoc) => {
+            const data = requestDoc.data();
             const li = document.createElement("li");
             li.innerHTML = `
                 ${data.from} sana istek attı! 
-                <button style="background:green; color:white; border:none; padding:5px; margin-left:5px; cursor:pointer;" onclick="acceptRequest('${doc.id}', '${data.from}')">Kabul Et</button>
+                <button style="background:green; color:white; border:none; padding:5px; margin-left:5px; border-radius:3px; cursor:pointer;" onclick="acceptRequest('${requestDoc.id}', '${data.from}')">Kabul Et</button>
             `;
             requestsList.appendChild(li);
         });
     });
 }
 
-// (Not: acceptRequest fonksiyonunu genel kapsama almak için window objesine ekliyoruz)
+// 5. İSTEĞİ KABUL ETME (ASIL İŞLEM BURADA)
 window.acceptRequest = async function(requestId, fromUser) {
-    alert(fromUser + " ile sohbet isteği kabul edildi! (Mesajlaşma kodları eklenecek)");
-    // İlerleyen aşamada burada isteğin durumunu "accepted" yapacağız ve sohbeti başlatacağız.
+    try {
+        // "chats" adında yeni bir koleksiyona ikinizi (sohbet odası olarak) ekliyoruz
+        await addDoc(collection(db, "chats"), {
+            users: [currentUser, fromUser]
+        });
+        
+        // Sohbet açıldığı için bekleyen isteği veritabanından tamamen siliyoruz
+        await deleteDoc(doc(db, "requests", requestId));
+        
+    } catch (error) {
+        console.error("Kabul ederken hata oluştu:", error);
+    }
+}
+
+// 6. KABUL EDİLEN SOHBETLERİ LİSTELEME
+function listenForContacts() {
+    // İçinde bizim kullanıcı adımız geçen sohbetleri buluyoruz
+    const q = query(collection(db, "chats"), where("users", "array-contains", currentUser));
+    
+    onSnapshot(q, (snapshot) => {
+        const contactsList = document.getElementById("contacts-list");
+        contactsList.innerHTML = "";
+        
+        snapshot.forEach((chatDoc) => {
+            const data = chatDoc.data();
+            // Sohbet odasındaki 2 kişiden bizim dışımızdaki (diğer) kişiyi bul
+            const otherUser = data.users.find(u => u !== currentUser);
+            
+            const li = document.createElement("li");
+            li.textContent = otherUser;
+            // Listeden kişiye tıklanınca o sohbeti açacak
+            li.onclick = () => openChat(chatDoc.id, otherUser);
+            contactsList.appendChild(li);
+        });
+    });
+}
+
+// 7. SOHBET PENCERESİNİ AÇMA
+window.openChat = function(chatId, otherUser) {
+    const chatTitle = document.getElementById("chat-title");
+    const messageInputs = document.getElementById("message-inputs");
+    const messagesDiv = document.getElementById("messages");
+    
+    // Sağ taraftaki ekranı seçilen kişiye göre güncelle
+    chatTitle.textContent = otherUser + " ile mesajlaşıyorsunuz";
+    messageInputs.style.display = "flex"; // Mesaj yazma kutusunu aç
+    messagesDiv.innerHTML = "<p style='color:#888; text-align:center;'>Burada mesajlarınız görünecek... (Sıradaki Adım)</p>";
 }
