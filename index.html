@@ -3,86 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DreaxAPP - Özel Sohbet</title>
-    <link rel="stylesheet" href="style.css">
+    <title>DreaxAPP</title>
+    <style>
+        /* GENEL TASARIM */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #ffffff; margin: 0; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+        
+        /* EKRANLAR */
+        #login-screen, #main-screen { display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; }
+        #main-screen { flex-direction: row; display: none; align-items: stretch; }
+        
+        /* GİRİŞ EKRANI */
+        #login-screen { background: linear-gradient(135deg, #1e1e1e, #000000); }
+        #login-screen input { width: 250px; padding: 12px; margin: 10px 0; border-radius: 5px; border: none; background: #333; color: white; }
+        #login-screen button { width: 274px; padding: 12px; background: #0084ff; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        
+        /* YAN MENÜ (SİDEBAR) */
+        #sidebar { width: 320px; background: #1a1a1a; padding: 20px; border-right: 1px solid #333; display: flex; flex-direction: column; }
+        #sidebar h3 { margin-top: 0; color: #0084ff; }
+        .action-btn { width: 100%; padding: 10px; margin-bottom: 10px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; color: white; }
+        #add-chat-btn { background: #28a745; }
+        #btnGrupOlustur { background: #8e44ad; }
+        
+        /* LİSTELER */
+        ul { list-style: none; padding: 0; overflow-y: auto; flex: 1; }
+        li { padding: 12px; background: #2a2a2a; margin-bottom: 8px; cursor: pointer; border-radius: 5px; display: flex; align-items: center; gap: 10px; }
+        li:hover { background: #3a3a3a; }
+        .group-icon { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+        
+        /* SOHBET ALANI */
+        #chat-area { flex: 1; display: flex; flex-direction: column; background: #121212; position: relative; }
+        #chat-header { padding: 20px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        #messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        #message-inputs { display: none; padding: 20px; background: #1a1a1a; gap: 10px; }
+        #message-inputs input { flex: 1; padding: 12px; border-radius: 20px; border: none; background: #333; color: white; outline: none; }
+        #message-inputs button { padding: 10px 25px; background: #0084ff; color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        
+        /* MODALLAR (AÇILIR PENCERELER) */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
+        .modal-content { background: #222; padding: 25px; border-radius: 10px; width: 90%; max-width: 400px; position: relative; }
+        .modal-content input[type="text"], .modal-content input[type="file"] { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #444; background: #333; color: white; box-sizing: border-box; }
+        .modal-content button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .close-btn { position: absolute; right: 20px; top: 15px; font-size: 24px; cursor: pointer; color: #888; }
+        .close-btn:hover { color: white; }
+    </style>
 </head>
 <body>
 
-    <!-- GİRİŞ EKRANI -->
+    <!-- 1. GİRİŞ EKRANI -->
     <div id="login-screen">
-        <h2>DreaxAPP'e Giriş</h2>
+        <h2 style="color: #0084ff; font-size: 32px; margin-bottom: 30px;">DreaxAPP</h2>
         <input type="text" id="username" placeholder="Kullanıcı Adı">
         <input type="password" id="password" placeholder="Şifre">
         <button id="login-btn">Giriş Yap</button>
-        <p id="error-msg" style="display: none; color: #ff4a4a; font-size: 14px; margin-top: 10px;">Hatalı bilgi veya kayıtlı değilsiniz!</p>
+        <p id="error-msg" style="color:#ff4a4a; display:none; margin-top:15px;">Hatalı giriş!</p>
     </div>
 
-    <!-- ANA SOHBET EKRANI -->
-    <div id="main-screen" style="display: none;">
-        
+    <!-- 2. ANA UYGULAMA EKRANI -->
+    <div id="main-screen">
         <!-- Sol Menü -->
         <div id="sidebar">
-            <div class="user-profile">
-                Hoş geldin, <span id="current-user-display"></span>
-            </div>
-            <div class="top-buttons">
-                <button id="add-chat-btn">Sohbet Ekle</button>
-                <button id="create-group-btn">Grup Oluştur</button>
-            </div>
+            <h3>Hesap: <span id="current-user-display" style="color:white;"></span></h3>
+            <button id="add-chat-btn" class="action-btn">👤 Yeni Kişi Ekle</button>
+            <button id="btnGrupOlustur" class="action-btn">👥 Yeni Grup Kur</button>
             
-            <div id="requests-area">
-                <h3>Gelen İstekler</h3>
-                <ul id="requests-list">
-                    <!-- İstekler buraya düşecek -->
-                </ul>
-            </div>
-
-            <div id="contacts-area">
-                <h3>Sohbetlerim</h3>
-                <ul id="contacts-list">
-                    <!-- Kabul edilen kişiler buraya düşecek -->
-                </ul>
-            </div>
+            <h4 style="margin-bottom: 5px; border-bottom: 1px solid #444; padding-bottom: 5px;">Gelen İstekler</h4>
+            <ul id="requests-list" style="flex: none; max-height: 150px;"></ul>
+            
+            <h4 style="margin-bottom: 5px; border-bottom: 1px solid #444; padding-bottom: 5px;">Mesajlar</h4>
+            <ul id="contacts-list"></ul>
         </div>
-
-        <!-- Sağ Taraf (Mesajlaşma Paneli) -->
+        
+        <!-- Sağ Sohbet Alanı -->
         <div id="chat-area">
-            
-            <!-- Üst Başlık ve Sesli Arama Butonu -->
-            <div id="chat-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: #232323; border-bottom: 1px solid #333;">
-                <h2 id="chat-title" style="margin: 0;">Mesajlaşmak için bir sohbet seçin</h2>
-                
-                <!-- Sesli Ara Butonu (Başlangıçta gizli, sohbet seçilince açılacak) -->
-                <button id="voice-call-btn" style="display: none; background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">📞 Sesli Ara</button>
+            <div id="chat-header">
+                <h3 id="chat-title" style="margin:0;">Sohbet Seçin</h3>
+                <button id="voice-call-btn" style="display:none; background:#28a745; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-weight:bold;">📞 Sesli Ara</button>
             </div>
             
-            <!-- Mesajların Görüneceği Yer -->
             <div id="messages"></div>
             
-            <!-- Mesaj Yazma Alanı -->
-            <div id="message-inputs" style="display: none;">
+            <div id="message-inputs">
                 <input type="text" id="message-input" placeholder="Mesajınızı yazın...">
                 <button id="send-btn">Gönder</button>
             </div>
-
-            <!-- Sesli Konuşma İçin Görünmez Hoparlörler (Sistemin Arka Planında Çalışır) -->
-            <audio id="local-audio" autoplay muted></audio>
-            <audio id="remote-audio" autoplay></audio>
-            
         </div>
     </div>
 
-    <!-- SOHBET EKLE PENCERESİ (Gizli) -->
-    <div id="add-chat-modal" class="modal" style="display: none;">
+    <!-- 3. KİŞİ EKLEME MODALI -->
+    <div id="add-chat-modal" class="modal">
         <div class="modal-content">
-            <h3>Kullanıcıya İstek At</h3>
-            <input type="text" id="target-username" placeholder="Arkadaşının Kullanıcı Adı">
+            <span id="close-modal-btn" class="close-btn">&times;</span>
+            <h3 style="margin-top:0;">Kişi Ekle</h3>
+            <input type="text" id="target-username" placeholder="Kullanıcı Adı">
             <button id="send-request-btn">İstek Gönder</button>
-            <button id="close-modal-btn">İptal</button>
         </div>
     </div>
 
-    <!-- Sistem Beyni -->
+    <!-- 4. GRUP OLUŞTURMA MODALI -->
+    <div id="grupModal" class="modal">
+        <div class="modal-content">
+            <span id="close-group-modal-btn" class="close-btn">&times;</span>
+            <h3 style="margin-top:0;">Yeni Grup Kur</h3>
+            <form id="grupForm">
+                <label>Grup Adı:</label>
+                <input type="text" id="grupAdi" placeholder="Örn: Yazılım Ekibi" required>
+                
+                <label style="display:block; margin-top:10px;">Grup Görseli Seç:</label>
+                <input type="file" id="grupGorseli" accept="image/*">
+                <img id="gorselOnizleme" src="" style="display:none; width:100%; height:150px; object-fit:cover; margin-top:10px; border-radius:5px; border:1px solid #444;">
+                
+                <label style="display:block; margin-top:10px;">Üyeler (Kendi adınızı yazmayın, diğerlerini virgülle ayırın):</label>
+                <input type="text" id="grupUyeleri" placeholder="ahmet, mehmet" required>
+                
+                <button type="submit" style="margin-top:15px; background:#8e44ad;">Grubu Kur</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5. GELEN ARAMA EKRANI -->
+    <div id="incoming-call-screen" style="display:none; position:absolute; top:20px; left:50%; transform:translateX(-50%); background:#222; padding:20px; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.9); z-index:2000; text-align:center; border: 1px solid #0084ff;">
+        <h3 id="caller-name" style="color:white; margin-top:0;">Birisi arıyor...</h3>
+        <button id="answer-btn" style="background:#28a745; color:white; padding:10px 20px; border:none; border-radius:5px; margin-right:10px; cursor:pointer; font-weight:bold;">📞 Aç</button>
+        <button id="reject-btn" style="background:#ff4a4a; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">Kapat</button>
+        <audio id="ringtone" src="https://actions.google.com/sounds/v1/alarms/phone_ringing.ogg" loop preload="auto"></audio>
+    </div>
+
+    <!-- 6. GİZLİ SES ELEMENTLERİ (WebRTC İçin) -->
+    <audio id="local-audio" autoplay muted style="display:none;"></audio>
+    <audio id="remote-audio" autoplay style="display:none;"></audio>
+
     <script type="module" src="app.js"></script>
 </body>
 </html>
