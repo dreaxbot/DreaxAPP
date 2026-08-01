@@ -1,9 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, getDoc, collection, addDoc, query, where, onSnapshot, deleteDoc, orderBy, serverTimestamp, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// ==========================================
-// ⚙️ FİREBASE YAPILANDIRMASI
-// ==========================================
+// ⚠️ FIREBASE BİLGİLERİN
 const firebaseConfig = {
     apiKey: "SENIN_API_KEY_BURAYA",
     authDomain: "dreaxapp.firebaseapp.com",
@@ -18,14 +16,15 @@ const db = getFirestore(app);
 
 let currentUser = "";
 let currentChatId = null;
+const DEFAULT_PP = "https://via.placeholder.com/50x50.png?text=PP";
 
-// DOM ELEMENTLERİ
+// HTML Elementleri
 const screens = { login: document.getElementById("login-screen"), main: document.getElementById("main-screen") };
 const inputs = { user: document.getElementById("username"), pass: document.getElementById("password"), msg: document.getElementById("message-input") };
-const buttons = { login: document.getElementById("login-btn"), sendMsg: document.getElementById("send-btn"), voiceCall: document.getElementById("voice-call-btn") };
+const buttons = { login: document.getElementById("login-btn"), sendMsg: document.getElementById("send-btn") };
 
 // ==========================================
-// 1️⃣ GİRİŞ VE KİMLİK DOĞRULAMA
+// 1️⃣ GİRİŞ VE PROFİL YÜKLEME SİSTEMİ
 // ==========================================
 buttons.login.addEventListener("click", async () => {
     const user = inputs.user.value.trim();
@@ -35,9 +34,20 @@ buttons.login.addEventListener("click", async () => {
     const userSnap = await getDoc(doc(db, "users", user));
     if (userSnap.exists() && userSnap.data().password === pass) {
         currentUser = user;
-        document.getElementById("current-user-display").textContent = currentUser;
+        const userData = userSnap.data();
+        
+        // Sağ-Sol menü geçişi
         screens.login.style.display = "none";
         screens.main.style.display = "flex";
+        
+        // Kullanıcı verilerini ekrana bas
+        document.getElementById("current-user-display").textContent = currentUser;
+        document.getElementById("sidebar-bio").textContent = userData.bio || "Merhaba! Ben DreaxAPP kullanıyorum.";
+        document.getElementById("sidebar-pp").src = userData.pp || DEFAULT_PP;
+        
+        // Profil düzenleme penceresi için ön hazırlık
+        document.getElementById("profilAciklama").value = userData.bio || "";
+        document.getElementById("profilDuzenleOnizleme").src = userData.pp || DEFAULT_PP;
         
         listenForRequests();
         listenForContacts();
@@ -47,7 +57,50 @@ buttons.login.addEventListener("click", async () => {
 });
 
 // ==========================================
-// 2️⃣ KİŞİ EKLEME (BİREBİR)
+// 2️⃣ PROFİL DÜZENLEME SİSTEMİ (YENİ)
+// ==========================================
+const profilModal = document.getElementById("profilModal");
+const profilPpSecici = document.getElementById("profilPpSecici");
+const profilDuzenleOnizleme = document.getElementById("profilDuzenleOnizleme");
+let base64YeniPp = null;
+
+document.getElementById("btnProfilDuzenle").addEventListener("click", () => profilModal.style.display = "flex");
+document.getElementById("close-profile-btn").addEventListener("click", () => profilModal.style.display = "none");
+
+// Fotoğraf seçildiğinde önizleme yap
+profilPpSecici.addEventListener("change", function() {
+    const dosya = this.files[0];
+    if (dosya) {
+        const okuyucu = new FileReader();
+        okuyucu.onload = function(e) {
+            base64YeniPp = e.target.result;
+            profilDuzenleOnizleme.src = base64YeniPp;
+        }
+        okuyucu.readAsDataURL(dosya);
+    }
+});
+
+// Profil Değişikliklerini Kaydet
+document.getElementById("profilKaydetBtn").addEventListener("click", async () => {
+    const yeniBio = document.getElementById("profilAciklama").value.trim();
+    const guncellenecekVeri = { bio: yeniBio };
+    
+    // Eğer yeni fotoğraf seçildiyse objeye ekle
+    if (base64YeniPp) guncellenecekVeri.pp = base64YeniPp;
+    
+    // Veritabanını güncelle
+    await updateDoc(doc(db, "users", currentUser), guncellenecekVeri);
+    
+    // Anında ekranı (Sol Sidebar) güncelle
+    document.getElementById("sidebar-bio").textContent = yeniBio || "Merhaba! Ben DreaxAPP kullanıyorum.";
+    if (base64YeniPp) document.getElementById("sidebar-pp").src = base64YeniPp;
+    
+    alert("Profilin başarıyla güncellendi!");
+    profilModal.style.display = "none";
+});
+
+// ==========================================
+// 3️⃣ İSTEK ATMA VE KİŞİ EKLEME
 // ==========================================
 const addChatModal = document.getElementById("add-chat-modal");
 document.getElementById("add-chat-btn").addEventListener("click", () => addChatModal.style.display = "flex");
@@ -62,6 +115,7 @@ document.getElementById("send-request-btn").addEventListener("click", async () =
         await addDoc(collection(db, "requests"), { from: currentUser, to: target, status: "pending" });
         alert("İstek başarıyla gönderildi!");
         addChatModal.style.display = "none";
+        document.getElementById("target-username").value = "";
     } else {
         alert("Böyle bir kullanıcı bulunamadı!");
     }
@@ -75,7 +129,7 @@ function listenForRequests() {
         snapshot.forEach((reqDoc) => {
             const data = reqDoc.data();
             const li = document.createElement("li");
-            li.innerHTML = `<span>${data.from}</span> <button style="background:green; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer;" onclick="acceptRequest('${reqDoc.id}', '${data.from}')">Kabul Et</button>`;
+            li.innerHTML = `<span style="flex:1;">${data.from}</span> <button style="background:green; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer;" onclick="acceptRequest('${reqDoc.id}', '${data.from}')">Kabul Et</button>`;
             list.appendChild(li);
         });
     });
@@ -87,24 +141,23 @@ window.acceptRequest = async function(requestId, fromUser) {
 };
 
 // ==========================================
-// 3️⃣ GRUP OLUŞTURMA SİSTEMİ
+// 4️⃣ GRUP OLUŞTURMA SİSTEMİ
 // ==========================================
 const grupModal = document.getElementById("grupModal");
 const gorselOnizleme = document.getElementById("gorselOnizleme");
-const dosyaSecici = document.getElementById("grupGorseli");
+const grupGorseli = document.getElementById("grupGorseli");
+let base64GrupGorsel = ""; 
 
 document.getElementById("btnGrupOlustur").addEventListener("click", () => grupModal.style.display = "flex");
 document.getElementById("close-group-modal-btn").addEventListener("click", () => { grupModal.style.display = "none"; document.getElementById("grupForm").reset(); gorselOnizleme.style.display="none"; });
 
-let base64Gorsel = ""; // Resmi metin formatında tutmak için
-
-dosyaSecici.addEventListener("change", function() {
+grupGorseli.addEventListener("change", function() {
     const dosya = this.files[0];
     if (dosya) {
         const okuyucu = new FileReader();
         okuyucu.onload = function(e) {
-            base64Gorsel = e.target.result;
-            gorselOnizleme.src = base64Gorsel;
+            base64GrupGorsel = e.target.result;
+            gorselOnizleme.src = base64GrupGorsel;
             gorselOnizleme.style.display = "block";
         }
         okuyucu.readAsDataURL(dosya);
@@ -116,28 +169,28 @@ document.getElementById("grupForm").addEventListener("submit", async (e) => {
     const ad = document.getElementById("grupAdi").value.trim();
     const uyelerHam = document.getElementById("grupUyeleri").value;
     
-    // Üyeleri ayır, boşlukları sil, kendini ekle
+    // Üyeleri virgülle ayır, boşlukları temizle, kendini (admini) gruba ekle
     let uyeler = uyelerHam.split(',').map(u => u.trim()).filter(u => u !== "");
-    uyeler.push(currentUser); // Grubu kuranı otomatik ekle
+    if (!uyeler.includes(currentUser)) uyeler.push(currentUser);
     
     await addDoc(collection(db, "chats"), {
         isGroup: true,
         groupName: ad,
-        groupImage: base64Gorsel, // Resmi veritabanına kaydet
+        groupImage: base64GrupGorsel || "https://via.placeholder.com/50x50.png?text=Grup",
         users: uyeler,
         admin: currentUser,
         createdAt: serverTimestamp()
     });
     
-    alert(`"${ad}" grubu oluşturuldu!`);
+    alert(`"${ad}" grubu başarıyla oluşturuldu!`);
     grupModal.style.display = "none";
     document.getElementById("grupForm").reset();
     gorselOnizleme.style.display = "none";
-    base64Gorsel = "";
+    base64GrupGorsel = "";
 });
 
 // ==========================================
-// 4️⃣ SOHBET LİSTESİ VE MESAJLAŞMA
+// 5️⃣ SOHBET LİSTESİ VE MESAJLAŞMA
 // ==========================================
 function listenForContacts() {
     const q = query(collection(db, "chats"), where("users", "array-contains", currentUser));
@@ -149,28 +202,30 @@ function listenForContacts() {
             const li = document.createElement("li");
             
             if (data.isGroup) {
-                // Grup ise grup adını ve görselini göster
-                const img = data.groupImage ? `<img src="${data.groupImage}" class="group-icon">` : '👥';
-                li.innerHTML = `${img} <b>${data.groupName}</b>`;
-                li.onclick = () => openChat(chatDoc.id, data.groupName, true);
+                // Eğer Grupsa, kendi resmini yükle
+                li.innerHTML = `<img src="${data.groupImage}" class="profile-icon"> <b>${data.groupName}</b>`;
+                li.onclick = () => openChat(chatDoc.id, data.groupName, data.groupImage);
             } else {
-                // Birebir sohbet ise karşı tarafın adını göster
+                // Birebir Sohbet
                 const otherUser = data.users.find(u => u !== currentUser);
-                li.innerHTML = `👤 ${otherUser}`;
-                li.onclick = () => openChat(chatDoc.id, otherUser, false);
+                li.innerHTML = `<img src="${DEFAULT_PP}" class="profile-icon"> <span>${otherUser}</span>`;
+                li.onclick = () => openChat(chatDoc.id, otherUser, DEFAULT_PP);
             }
             list.appendChild(li);
         });
     });
 }
 
-window.openChat = function(chatId, title, isGroup) {
+// Sohbeti Ekrana Açma
+window.openChat = function(chatId, title, imageSrc) {
     currentChatId = chatId;
     document.getElementById("chat-title").textContent = title;
-    document.getElementById("message-inputs").style.display = "flex";
     
-    // Sesli aramayı grup değilse göster (WebRTC Mesh karmaşasını önlemek için)
-    buttons.voiceCall.style.display = isGroup ? "none" : "block"; 
+    const headerImg = document.getElementById("chat-header-img");
+    headerImg.src = imageSrc;
+    headerImg.style.display = "block";
+    
+    document.getElementById("message-inputs").style.display = "flex";
     
     const messagesDiv = document.getElementById("messages");
     const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"));
@@ -182,134 +237,24 @@ window.openChat = function(chatId, title, isGroup) {
             if(m.sender === currentUser) {
                 div.innerHTML = `<div style="background:#0084ff; color:white; padding:10px 15px; border-radius:15px 15px 0 15px; float:right; max-width:70%; word-wrap: break-word;">${m.text}</div><div style="clear:both;"></div>`;
             } else {
-                div.innerHTML = `<div style="background:#333; color:white; padding:10px 15px; border-radius:15px 15px 15px 0; float:left; max-width:70%; word-wrap: break-word;"><span style="font-size:11px; color:#aaa; display:block;">${m.sender}</span>${m.text}</div><div style="clear:both;"></div>`;
+                div.innerHTML = `<div style="background:#333; color:white; padding:10px 15px; border-radius:15px 15px 15px 0; float:left; max-width:70%; word-wrap: break-word;"><span style="font-size:11px; color:#aaa; display:block; margin-bottom:3px;">${m.sender}</span>${m.text}</div><div style="clear:both;"></div>`;
             }
             messagesDiv.appendChild(div);
         });
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight; // Ekranı en alta kaydır
     });
-
-    listenForCalls(); // Odaya girince WebRTC çağrılarını dinle
 };
 
+// Mesaj Gönderme
 buttons.sendMsg.addEventListener("click", async () => {
     if (!currentChatId || !inputs.msg.value.trim()) return;
     const text = inputs.msg.value.trim();
     inputs.msg.value = "";
-    await addDoc(collection(db, "chats", currentChatId, "messages"), { text: text, sender: currentUser, timestamp: serverTimestamp() });
+    await addDoc(collection(db, "chats", currentChatId, "messages"), { 
+        text: text, 
+        sender: currentUser, 
+        timestamp: serverTimestamp() 
+    });
 });
 
-// Enter tuşuyla mesaj gönderme
 inputs.msg.addEventListener("keypress", (e) => { if (e.key === "Enter") buttons.sendMsg.click(); });
-
-// ==========================================
-// 🎙️ 5️⃣ WEBRTC SES MOTORU VE ÇALDIRMA (BİREBİR)
-// ==========================================
-const servers = { iceServers: [{ urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }] };
-let localStream, remoteStream, peerConnection;
-
-const incomingCallScreen = document.getElementById("incoming-call-screen");
-const callerName = document.getElementById("caller-name");
-const ringtone = document.getElementById("ringtone");
-
-buttons.voiceCall.addEventListener("click", async () => {
-    if (buttons.voiceCall.style.backgroundColor === "red") {
-        hangUp();
-    } else {
-        await createCall();
-    }
-});
-
-async function createCall() {
-    buttons.voiceCall.style.backgroundColor = "red";
-    buttons.voiceCall.textContent = "📞 Aramayı Kapat";
-
-    const callDoc = doc(db, "chats", currentChatId, "calls", "currentCall");
-    const offerCandidates = collection(callDoc, "offerCandidates");
-    const answerCandidates = collection(callDoc, "answerCandidates");
-
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false });
-    document.getElementById("local-audio").srcObject = localStream;
-    peerConnection = new RTCPeerConnection(servers);
-    
-    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-    peerConnection.ontrack = (e) => document.getElementById("remote-audio").srcObject = e.streams[0];
-
-    peerConnection.onicecandidate = (e) => { if (e.candidate) addDoc(offerCandidates, e.candidate.toJSON()); };
-
-    const offerDescription = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offerDescription);
-    await setDoc(callDoc, { offer: { sdp: offerDescription.sdp, type: offerDescription.type }, caller: currentUser });
-
-    onSnapshot(callDoc, (snapshot) => {
-        const data = snapshot.data();
-        if (!peerConnection.currentRemoteDescription && data?.answer) {
-            peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-        }
-    });
-
-    onSnapshot(answerCandidates, (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-            if (change.type === 'added') peerConnection.addIceCandidate(new RTCIceCandidate(change.doc.data()));
-        });
-    });
-}
-
-function listenForCalls() {
-    const callDoc = doc(db, "chats", currentChatId, "calls", "currentCall");
-    onSnapshot(callDoc, (snapshot) => {
-        const data = snapshot.data();
-        if (data?.offer && data.caller !== currentUser && !peerConnection) {
-            incomingCallScreen.style.display = "block";
-            callerName.textContent = `${data.caller} arıyor...`;
-            ringtone.play().catch(e => console.log("Ses çalma izni gerekli"));
-        }
-    });
-}
-
-document.getElementById("answer-btn").addEventListener("click", async () => {
-    incomingCallScreen.style.display = "none";
-    ringtone.pause(); ringtone.currentTime = 0;
-    buttons.voiceCall.style.backgroundColor = "red";
-    buttons.voiceCall.textContent = "📞 Aramayı Kapat";
-
-    const callDoc = doc(db, "chats", currentChatId, "calls", "currentCall");
-    const offerCandidates = collection(callDoc, "offerCandidates");
-    const answerCandidates = collection(callDoc, "answerCandidates");
-
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false });
-    document.getElementById("local-audio").srcObject = localStream;
-    peerConnection = new RTCPeerConnection(servers);
-
-    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-    peerConnection.ontrack = (e) => document.getElementById("remote-audio").srcObject = e.streams[0];
-
-    peerConnection.onicecandidate = (e) => { if (e.candidate) addDoc(answerCandidates, e.candidate.toJSON()); };
-
-    const callData = (await getDoc(callDoc)).data();
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(callData.offer));
-    const answerDescription = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(answerDescription);
-
-    await updateDoc(callDoc, { answer: { type: answerDescription.type, sdp: answerDescription.sdp } });
-
-    onSnapshot(offerCandidates, (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-            if (change.type === 'added') peerConnection.addIceCandidate(new RTCIceCandidate(change.doc.data()));
-        });
-    });
-});
-
-document.getElementById("reject-btn").addEventListener("click", hangUp);
-
-async function hangUp() {
-    incomingCallScreen.style.display = "none";
-    ringtone.pause(); ringtone.currentTime = 0;
-    buttons.voiceCall.style.backgroundColor = "#28a745";
-    buttons.voiceCall.textContent = "📞 Sesli Ara";
-
-    if (peerConnection) { peerConnection.close(); peerConnection = null; }
-    if (localStream) localStream.getTracks().forEach(track => track.stop());
-    
-    if (currentChatId) await deleteDoc(doc(db, "chats", currentChatId, "calls", "currentCall"));
-}
