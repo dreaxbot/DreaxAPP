@@ -5,46 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DreaxAPP</title>
     <style>
-        /* GENEL TASARIM */
+        /* GENEL TASARIM (Senin Tarzın) */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #ffffff; margin: 0; }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
         
-        /* EKRANLAR */
         #login-screen, #main-screen { display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; }
         #main-screen { flex-direction: row; display: none; align-items: stretch; }
         
-        /* GİRİŞ EKRANI */
         #login-screen { background: linear-gradient(135deg, #1e1e1e, #000000); }
         #login-screen input { width: 250px; padding: 12px; margin: 10px 0; border-radius: 5px; border: none; background: #333; color: white; }
         #login-screen button { width: 274px; padding: 12px; background: #0084ff; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
         
-        /* YAN MENÜ (SİDEBAR) */
         #sidebar { width: 320px; background: #1a1a1a; padding: 20px; border-right: 1px solid #333; display: flex; flex-direction: column; }
-        #sidebar h3 { margin-top: 0; color: #0084ff; }
         .action-btn { width: 100%; padding: 10px; margin-bottom: 10px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; color: white; }
         #add-chat-btn { background: #28a745; }
         #btnGrupOlustur { background: #8e44ad; }
+        #btnProfilDuzenle { background: #0084ff; }
         
-        /* LİSTELER */
-        ul { list-style: none; padding: 0; overflow-y: auto; flex: 1; }
+        ul { list-style: none; padding: 0; overflow-y: auto; flex: 1; margin: 0; }
         li { padding: 12px; background: #2a2a2a; margin-bottom: 8px; cursor: pointer; border-radius: 5px; display: flex; align-items: center; gap: 10px; }
         li:hover { background: #3a3a3a; }
-        .group-icon { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
         
-        /* SOHBET ALANI */
+        .profile-icon { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; background: #444; border: 2px solid #333; }
+        
+        /* PROFİL ALANI KARTI */
+        .my-profile-card { background: #222; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 15px; border: 1px solid #333; }
+        .my-profile-card img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #0084ff; }
+        .my-profile-info { flex: 1; overflow: hidden; }
+        .my-profile-info h3 { margin: 0 0 5px 0; font-size: 16px; color: #0084ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .my-profile-info p { margin: 0; font-size: 12px; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
         #chat-area { flex: 1; display: flex; flex-direction: column; background: #121212; position: relative; }
-        #chat-header { padding: 20px; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        #chat-header { padding: 20px; background: #1a1a1a; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #333; }
+        #chat-header img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
         #messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        
         #message-inputs { display: none; padding: 20px; background: #1a1a1a; gap: 10px; }
         #message-inputs input { flex: 1; padding: 12px; border-radius: 20px; border: none; background: #333; color: white; outline: none; }
         #message-inputs button { padding: 10px 25px; background: #0084ff; color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
         
-        /* MODALLAR (AÇILIR PENCERELER) */
+        /* MODALLAR */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
-        .modal-content { background: #222; padding: 25px; border-radius: 10px; width: 90%; max-width: 400px; position: relative; }
+        .modal-content { background: #222; padding: 25px; border-radius: 10px; width: 90%; max-width: 400px; position: relative; border: 1px solid #444; }
         .modal-content input[type="text"], .modal-content input[type="file"] { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #444; background: #333; color: white; box-sizing: border-box; }
-        .modal-content button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .modal-content button { width: 100%; padding: 12px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .close-btn { position: absolute; right: 20px; top: 15px; font-size: 24px; cursor: pointer; color: #888; }
         .close-btn:hover { color: white; }
     </style>
@@ -62,24 +67,35 @@
 
     <!-- 2. ANA UYGULAMA EKRANI -->
     <div id="main-screen">
-        <!-- Sol Menü -->
+        
+        <!-- Sol Menü (Sidebar) -->
         <div id="sidebar">
-            <h3>Hesap: <span id="current-user-display" style="color:white;"></span></h3>
+            
+            <!-- KULLANICI PROFİL KARTI (YENİ) -->
+            <div class="my-profile-card">
+                <img id="sidebar-pp" src="https://via.placeholder.com/50x50.png?text=PP" alt="Profil Fotoğrafı">
+                <div class="my-profile-info">
+                    <h3 id="current-user-display">Kullanıcı</h3>
+                    <p id="current-user-bio">Hesap yükleniyor...</p>
+                </div>
+            </div>
+
+            <button id="btnProfilDuzenle" class="action-btn">⚙️ Profilimi Düzenle</button>
             <button id="add-chat-btn" class="action-btn">👤 Yeni Kişi Ekle</button>
             <button id="btnGrupOlustur" class="action-btn">👥 Yeni Grup Kur</button>
             
-            <h4 style="margin-bottom: 5px; border-bottom: 1px solid #444; padding-bottom: 5px;">Gelen İstekler</h4>
-            <ul id="requests-list" style="flex: none; max-height: 150px;"></ul>
+            <h4 style="margin: 15px 0 5px 0; border-bottom: 1px solid #444; padding-bottom: 5px;">Gelen İstekler</h4>
+            <ul id="requests-list" style="flex: none; max-height: 120px;"></ul>
             
-            <h4 style="margin-bottom: 5px; border-bottom: 1px solid #444; padding-bottom: 5px;">Mesajlar</h4>
+            <h4 style="margin: 15px 0 5px 0; border-bottom: 1px solid #444; padding-bottom: 5px;">Mesajlar & Gruplar</h4>
             <ul id="contacts-list"></ul>
         </div>
         
         <!-- Sağ Sohbet Alanı -->
         <div id="chat-area">
             <div id="chat-header">
+                <img id="chat-header-img" src="https://via.placeholder.com/45x45.png?text=?" style="display:none;">
                 <h3 id="chat-title" style="margin:0;">Sohbet Seçin</h3>
-                <button id="voice-call-btn" style="display:none; background:#28a745; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-weight:bold;">📞 Sesli Ara</button>
             </div>
             
             <div id="messages"></div>
@@ -97,11 +113,11 @@
             <span id="close-modal-btn" class="close-btn">&times;</span>
             <h3 style="margin-top:0;">Kişi Ekle</h3>
             <input type="text" id="target-username" placeholder="Kullanıcı Adı">
-            <button id="send-request-btn">İstek Gönder</button>
+            <button id="send-request-btn" style="background:#28a745;">İstek Gönder</button>
         </div>
     </div>
 
-    <!-- 4. GRUP OLUŞTURMA MODALI -->
+    <!-- 4. GRUP OLUŞTURMA MODALI (TAM İSTEDİĞİN GİBİ) -->
     <div id="grupModal" class="modal">
         <div class="modal-content">
             <span id="close-group-modal-btn" class="close-btn">&times;</span>
@@ -114,7 +130,7 @@
                 <input type="file" id="grupGorseli" accept="image/*">
                 <img id="gorselOnizleme" src="" style="display:none; width:100%; height:150px; object-fit:cover; margin-top:10px; border-radius:5px; border:1px solid #444;">
                 
-                <label style="display:block; margin-top:10px;">Üyeler (Kendi adınızı yazmayın, diğerlerini virgülle ayırın):</label>
+                <label style="display:block; margin-top:10px;">Üyeler (Virgülle ayırın, kendinizi yazmayın):</label>
                 <input type="text" id="grupUyeleri" placeholder="ahmet, mehmet" required>
                 
                 <button type="submit" style="margin-top:15px; background:#8e44ad;">Grubu Kur</button>
@@ -122,17 +138,25 @@
         </div>
     </div>
 
-    <!-- 5. GELEN ARAMA EKRANI -->
-    <div id="incoming-call-screen" style="display:none; position:absolute; top:20px; left:50%; transform:translateX(-50%); background:#222; padding:20px; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.9); z-index:2000; text-align:center; border: 1px solid #0084ff;">
-        <h3 id="caller-name" style="color:white; margin-top:0;">Birisi arıyor...</h3>
-        <button id="answer-btn" style="background:#28a745; color:white; padding:10px 20px; border:none; border-radius:5px; margin-right:10px; cursor:pointer; font-weight:bold;">📞 Aç</button>
-        <button id="reject-btn" style="background:#ff4a4a; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">Kapat</button>
-        <audio id="ringtone" src="https://actions.google.com/sounds/v1/alarms/phone_ringing.ogg" loop preload="auto"></audio>
-    </div>
+    <!-- 5. PROFİL DÜZENLEME MODALI (YENİ) -->
+    <div id="profilModal" class="modal">
+        <div class="modal-content">
+            <span id="close-profile-btn" class="close-btn">&times;</span>
+            <h3 style="margin-top:0;">Profilini Düzenle</h3>
+            
+            <div style="text-align: center; margin-bottom: 15px;">
+                <img id="profilDuzenleOnizleme" src="https://via.placeholder.com/100x100.png?text=PP" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid #0084ff;">
+            </div>
 
-    <!-- 6. GİZLİ SES ELEMENTLERİ (WebRTC İçin) -->
-    <audio id="local-audio" autoplay muted style="display:none;"></audio>
-    <audio id="remote-audio" autoplay style="display:none;"></audio>
+            <label style="display:block;">Profil Fotoğrafı Seç:</label>
+            <input type="file" id="profilPpSecici" accept="image/*">
+            
+            <label style="display:block; margin-top:10px;">Hakkımda (Açıklama):</label>
+            <input type="text" id="profilAciklama" placeholder="Kendinden bahset..." maxlength="50">
+            
+            <button id="profilKaydetBtn" style="margin-top:15px; background:#0084ff;">Değişiklikleri Kaydet</button>
+        </div>
+    </div>
 
     <script type="module" src="app.js"></script>
 </body>
